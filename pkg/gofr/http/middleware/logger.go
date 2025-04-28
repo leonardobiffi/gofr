@@ -93,6 +93,12 @@ type logger interface {
 func Logging(logger logger) func(inner http.Handler) http.Handler {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// disable logging for health check endpoints
+			if r.URL.Path == "/.well-known/health" || r.URL.Path == "/.well-known/alive" {
+				inner.ServeHTTP(w, r)
+				return
+			}
+
 			start := time.Now()
 			srw := &StatusResponseWriter{ResponseWriter: w}
 			traceID := trace.SpanFromContext(r.Context()).SpanContext().TraceID().String()
